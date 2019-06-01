@@ -31,10 +31,10 @@ def main():
     test_parapair_file = sys.argv[3]
     test_elmo_lookup_file = sys.argv[4]
     out_file = sys.argv[5]
-    train_elmo_lookup = np.load(train_elmo_lookup_file)
+    train_elmo_lookup = np.load(train_elmo_lookup_file, allow_pickle=True)
     with open(train_parapair_file, 'r') as ppd:
         train_parapair_data = json.load(ppd)
-    test_elmo_lookup = np.load(test_elmo_lookup_file)
+    test_elmo_lookup = np.load(test_elmo_lookup_file, allow_pickle=True)
     with open(test_parapair_file, 'r') as ppdt:
         test_parapair_data = json.load(ppdt)
     elmo_vec_len = len(train_elmo_lookup[()][list(train_elmo_lookup[()].keys())[0]][0])

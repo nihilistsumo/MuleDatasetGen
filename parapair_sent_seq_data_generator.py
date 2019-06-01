@@ -25,7 +25,7 @@ def main():
     # train_elmo_lookup_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1train-nodup-elmo-vec-data/by1train_merged_elmo_squeezed_para_vec_lookup.npy"
     # test_parapair_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/test-cleaned-parapairs/by1-test-cleaned-foodpages.parapairs.json"
     # test_elmo_lookup_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1test-nodup-elmo-vec-data/by1test_merged_elmo_squeezed_para_vec_lookup.npy"
-    # out_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/by1_elmo_seq_data.json"
+    # out_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/by1_elmo_seq_data"
     train_parapair_file = sys.argv[1]
     train_elmo_lookup_file = sys.argv[2]
     test_parapair_file = sys.argv[3]
@@ -54,8 +54,7 @@ def main():
     sequence_data['ytrain'] = train_labels
     sequence_data['Xtest'] = test_sequences
     sequence_data['ytest'] = test_labels
-    with open(out_file, 'w') as out:
-        json.dump(sequence_data, out)
+    np.save(out_file, sequence_data)
 
 if __name__ == '__main__':
     main()

@@ -36,8 +36,8 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
         train_sequences.append(seq_vec)
         if i % 1000 == 0:
             print(".")
-    train_sequences = np.array(train_sequences)
-    train_dat = np.hstack((train_sequences, train_labels, train_pairs))
+    train_dat = np.array(train_sequences)
+    # train_dat = np.hstack((train_sequences, train_labels, train_pairs))
     return train_dat
 
 def main():

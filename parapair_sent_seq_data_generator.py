@@ -20,6 +20,20 @@ def get_sequence_vec_parapair(parapair, elmo_vec_lookup, sent_seq_len):
         p2_sent_seqs = p2_sent_seqs[:sent_seq_len]
     return np.concatenate((p1_sent_seqs, p2_sent_seqs))
 
+def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
+    elmo_vec_len = len(elmo_lookup[()][list(elmo_lookup[()].keys())[0]][0])
+    print("ELMo vector length: {}".format(elmo_vec_len))
+    train_labels = np.array(parapair_data['labels'])
+    train_labels = train_labels.reshape((train_labels.size, 1))
+    train_pairs = np.array(parapair_data['parapairs'])
+    train_pairs = train_pairs.reshape((train_pairs.size, 1))
+    train_sequences = []
+    for pp in parapair_data['parapairs']:
+        train_sequences.append(get_sequence_vec_parapair(pp, elmo_lookup, MAX_SENT_COUNT * elmo_vec_len))
+    train_sequences = np.array(train_sequences)
+    train_dat = np.hstack((train_sequences, train_labels, train_pairs))
+    return train_dat
+
 def main():
     # train_parapair_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/train-cleaned-parapairs/by1-train-cleaned-foodpages.parapairs.json"
     # train_elmo_lookup_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1train-nodup-elmo-vec-data/by1train_merged_elmo_squeezed_para_vec_lookup.npy"

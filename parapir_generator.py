@@ -3,6 +3,18 @@
 import random, json, sys
 import numpy as np
 
+def get_random_neg_parapairs_different_page(page_paras, pagelist, count):
+    neg_parapairs = []
+    while(len(neg_parapairs) < count):
+        pages = random.sample(pagelist, 2)
+        para1 = str(random.sample(page_paras[pages[0]], 1)[0])
+        para2 = str(random.sample(page_paras[pages[1]], 1)[0])
+        pp1 = para1+"_"+para2
+        pp2 = para2+"_"+para1
+        if pp1 not in neg_parapairs and pp2 not in neg_parapairs:
+            neg_parapairs.append(para1+"_"+para2)
+    return neg_parapairs
+
 def generate_parapairs(page_paras, page_para_labels_file, pages=[]):
     if len(pages) == 0:
         pages = list(page_paras.keys())

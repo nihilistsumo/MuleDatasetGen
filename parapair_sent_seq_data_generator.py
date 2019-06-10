@@ -32,7 +32,7 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
     for i in range(len(parapair_data['parapairs'])):
         pp = parapair_data['parapairs'][i]
         seq_vec = get_sequence_vec_parapair(pp, elmo_lookup, MAX_SENT_COUNT * elmo_vec_len)
-        np.concatenate(seq_vec, np.array([train_labels[i][0], train_pairs[i][0]]))
+        np.concatenate((seq_vec, np.array([train_labels[i][0], train_pairs[i][0]])))
         train_sequences.append(seq_vec)
         if i % 1000 == 0:
             print(".")

@@ -29,10 +29,10 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
     train_pairs = train_pairs.reshape((train_pairs.size, 1))
     train_sequences = []
     print("No. of parapairs: {}".format(len(parapair_data['parapairs'])))
-    i = 0
-    for pp in parapair_data['parapairs']:
-        train_sequences.append(get_sequence_vec_parapair(pp, elmo_lookup, MAX_SENT_COUNT * elmo_vec_len))
-        i += 1
+    for i in range(len(parapair_data['parapairs'])):
+        pp = parapair_data['parapairs'][i]
+        seq_vec = np.concatenate(get_sequence_vec_parapair(pp, elmo_lookup, MAX_SENT_COUNT * elmo_vec_len), np.array([train_labels[i], train_pairs[i]]))
+        train_sequences.append(seq_vec)
         if i % 1000 == 0:
             print(".")
     train_sequences = np.array(train_sequences)

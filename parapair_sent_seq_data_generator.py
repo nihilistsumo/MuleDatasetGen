@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import random, json, sys, math
+import random, json, sys, math, argparse
 import numpy as np
 
 MAX_SENT_COUNT = 10
@@ -51,6 +51,16 @@ def create_test_data(parapair_data, elmo_lookup):
         if i % 1000 == 0:
             print(".")
     test_sequences = np.array(test_sequences)
+
+    for p in random.sample(range(len(test_select_pairs)), 10):
+        p1 = test_select_pairs[p].split("_")[0]
+        p2 = test_select_pairs[p].split("_")[1]
+        p1vec = test_sequences[p][:25600]
+        p2vec = test_sequences[p][25600:51200]
+        p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
+        p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
+        assert np.allclose(p1vec[:p1vec_elmo.size], p1vec_elmo) and np.allclose(p2vec[:p2vec_elmo.size], p2vec_elmo)
+
     return test_sequences, test_select_pairs
 
 def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
@@ -60,7 +70,7 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
     train_pairs = parapair_data['parapairs']
     pos_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 1]
     neg_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 0]
-    assert(len(pos_pairs) <= len(neg_pairs))
+    assert len(pos_pairs) <= len(neg_pairs)
     num_tr_pos = math.floor(len(pos_pairs) * 0.8)
     num_tr_neg = num_tr_pos - len(neg_diff_page_pairs)
     num_v_pos_neg = len(pos_pairs) - num_tr_pos
@@ -112,6 +122,25 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
         if i % 1000 == 0:
             print(".")
     validation_sequences = np.array(validation_sequences)
+
+    for p in random.sample(range(len(train_select_pairs)), 10):
+        p1 = train_select_pairs[p].split("_")[0]
+        p2 = train_select_pairs[p].split("_")[1]
+        p1vec = train_sequences[p][:25600]
+        p2vec = train_sequences[p][25600:51200]
+        p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
+        p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
+        assert np.allclose(p1vec[:p1vec_elmo.size], p1vec_elmo) and np.allclose(p2vec[:p2vec_elmo.size], p2vec_elmo)
+
+    for p in random.sample(range(len(validation_select_pairs)), 10):
+        p1 = validation_select_pairs[p].split("_")[0]
+        p2 = validation_select_pairs[p].split("_")[1]
+        p1vec = validation_sequences[p][:25600]
+        p2vec = validation_sequences[p][25600:51200]
+        p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
+        p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
+        assert np.allclose(p1vec[:p1vec_elmo.size], p1vec_elmo) and np.allclose(p2vec[:p2vec_elmo.size], p2vec_elmo)
+
     return train_sequences, train_select_pairs, validation_sequences, validation_select_pairs
 
 def main():
@@ -120,36 +149,41 @@ def main():
     # test_parapair_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/test-cleaned-parapairs/by1-test-cleaned-foodpages.parapairs.json"
     # test_elmo_lookup_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1test-nodup-elmo-vec-data/by1test_merged_elmo_squeezed_para_vec_lookup.npy"
     # out_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/by1_elmo_seq_data"
-    train_parapair_file = sys.argv[1]
-    train_elmo_lookup_file = sys.argv[2]
-    test_parapair_file = sys.argv[3]
-    test_elmo_lookup_file = sys.argv[4]
-    outdir = sys.argv[5]
+    parser = argparse.ArgumentParser(description='Create dataset suitable for direct training of MaLSTM.')
+    parser.add_argument("-trp", "--train-pair", required=True, help="Path to train parapair json")
+    parser.add_argument("-tp", "--test-pair", required=True, help="Path to test parapair json")
+    parser.add_argument("-tre", "--train-elmo", required=True, help="Path to train ELMo lookup np file")
+    parser.add_argument("-te", "--test-elmo", required=True, help="Path to test ELMo lookup np file")
+    parser.add_argument("-n", "--neg-diff", required=True, help="Path to negative parapair samples from different pages")
+    parser.add_argument("-o", "--out", required=True, help="Path to output file")
+    args = vars(parser.parse_args())
+    train_parapair_file = args["train_pair"]
+    train_elmo_lookup_file = args["train_elmo"]
+    test_parapair_file = args["test_pair"]
+    test_elmo_lookup_file = args["test_elmo"]
+    neg_pairs_diff_file = args["neg_diff"]
+    output_file = args["out"]
     train_elmo_lookup = np.load(train_elmo_lookup_file, allow_pickle=True)
     with open(train_parapair_file, 'r') as ppd:
         train_parapair_data = json.load(ppd)
     test_elmo_lookup = np.load(test_elmo_lookup_file, allow_pickle=True)
     with open(test_parapair_file, 'r') as ppdt:
         test_parapair_data = json.load(ppdt)
-    elmo_vec_len = len(train_elmo_lookup[()][list(train_elmo_lookup[()].keys())[0]][0])
-    print("ELMo vector length: {}".format(elmo_vec_len))
-    train_labels = np.array(train_parapair_data['labels'])
-    train_labels = train_labels.reshape((train_labels.size, 1))
-    train_sequences = []
-    for pp in train_parapair_data['parapairs']:
-        train_sequences.append(get_sequence_vec_parapair(pp, train_elmo_lookup, MAX_SENT_COUNT * elmo_vec_len))
-    train_sequences = np.array(train_sequences)
-    test_labels = np.array(test_parapair_data['labels'])
-    test_labels = test_labels.reshape((test_labels.size, 1))
-    test_sequences = []
-    for pp in test_parapair_data['parapairs']:
-        test_sequences.append(get_sequence_vec_parapair(pp, test_elmo_lookup, MAX_SENT_COUNT * elmo_vec_len))
-    test_sequences = np.array(test_sequences)
-    print("train seq shape {}".format(train_sequences.shape)+" train labels shape {}".format(train_labels.shape))
-    train_dat = np.hstack((train_sequences, train_labels))
-    test_dat = np.hstack((test_sequences, test_labels))
-    np.save(outdir+"/train", train_dat)
-    np.save(outdir+"/test", test_dat)
+    with open(neg_pairs_diff_file, 'r') as n:
+        neg_pairs = json.load(n)
+
+    train_sequences, train_select_pairs, validation_sequences, validation_select_pairs = \
+        create_train_data(train_parapair_data, train_elmo_lookup, neg_pairs)
+    test_sequences, test_select_pairs = create_test_data(test_parapair_data, test_elmo_lookup)
+    seq_data = dict()
+    seq_data['train_data'] = train_sequences
+    seq_data['train_parapairs'] = train_select_pairs
+    seq_data['val_data'] = validation_sequences
+    seq_data['val_parapairs'] = validation_select_pairs
+    seq_data['test_data'] = test_sequences
+    seq_data['test_parapairs'] = test_select_pairs
+    with open(output_file, 'w') as out:
+        json.dump(seq_data, out)
 
 if __name__ == '__main__':
     main()

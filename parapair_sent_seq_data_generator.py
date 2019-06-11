@@ -182,8 +182,8 @@ def main():
     seq_data['val_parapairs'] = validation_select_pairs
     seq_data['test_data'] = test_sequences
     seq_data['test_parapairs'] = test_select_pairs
-    with open(output_file, 'w') as out:
-        json.dump(seq_data, out)
+
+    np.save(output_file, seq_data)
 
 if __name__ == '__main__':
     main()

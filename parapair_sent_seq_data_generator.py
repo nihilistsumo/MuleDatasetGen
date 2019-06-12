@@ -2,6 +2,7 @@
 
 import random, json, sys, math, argparse
 import numpy as np
+import parapir_generator
 
 MAX_SENT_COUNT = 10
 
@@ -23,18 +24,23 @@ def get_sequence_vec_parapair(parapair, elmo_vec_lookup, sent_seq_len):
 def create_test_data(parapair_data, elmo_lookup):
     elmo_vec_len = len(elmo_lookup[()][list(elmo_lookup[()].keys())[0]][0])
     print("ELMo vector length: {}".format(elmo_vec_len))
-    test_labels = parapair_data['labels']
-    test_pairs = parapair_data['parapairs']
+    test_labels = []
+    test_pairs = []
+    for p in parapair_data.keys():
+        test_pairs = test_pairs + parapair_data[p]['parapairs']
+        test_labels = test_labels + parapair_data[p]['labels']
     test_pos_pairs = [p for p in test_pairs if test_labels[test_pairs.index(p)] == 1]
-    neg_pairs = [p for p in test_pairs if test_labels[test_pairs.index(p)] == 0]
-    assert (len(test_pos_pairs) <= len(neg_pairs))
+    test_neg_pairs = [p for p in test_pairs if test_labels[test_pairs.index(p)] == 0]
+    pair_shuffle_random(test_pos_pairs)
+    pair_shuffle_random(test_neg_pairs)
+    assert (len(test_pos_pairs) <= len(test_neg_pairs))
 
-    test_neg_pairs = random.sample(neg_pairs, len(test_pos_pairs))
+    test_neg_pairs = random.sample(test_neg_pairs, len(test_pos_pairs))
     test_select_pairs = test_pos_pairs + test_neg_pairs
     random.shuffle(test_select_pairs)
 
     test_sequences = []
-    print("No. of available parapairs from parapair data: {}".format(len(parapair_data['parapairs'])))
+    # print("No. of available parapairs from parapair data: {}".format(len(parapair_data['parapairs'])))
     print("Test set\n========")
     print("No of +ve samples: {}".format(len(test_pos_pairs)) +
           "\nNo of -ve samples same page: {}".format(len(test_neg_pairs)))
@@ -63,29 +69,60 @@ def create_test_data(parapair_data, elmo_lookup):
 
     return test_sequences, test_select_pairs
 
-def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
+def pair_shuffle_random(parapair_list):
+    for i in random.sample(range(len(parapair_list)), len(parapair_list)//2):
+        p1 = parapair_list[i].split("_")[0]
+        p2 = parapair_list[i].split("_")[1]
+        parapair_list[i] = p2+"_"+p1
+
+def create_train_data(parapair_data, elmo_lookup, page_paras, num_neg_diff_page_count=0):
+    TRAIN_PAGE_COUNT = len(parapair_data.keys()) // 2
+    VALIDATION_PAGE_COUNT = len(parapair_data.keys()) - TRAIN_PAGE_COUNT
+
     elmo_vec_len = len(elmo_lookup[()][list(elmo_lookup[()].keys())[0]][0])
     print("ELMo vector length: {}".format(elmo_vec_len))
-    train_labels = parapair_data['labels']
-    train_pairs = parapair_data['parapairs']
-    pos_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 1]
-    neg_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 0]
-    assert len(pos_pairs) <= len(neg_pairs)
-    num_tr_pos = math.floor(len(pos_pairs) * 0.8)
-    num_tr_neg = num_tr_pos - len(neg_diff_page_pairs)
-    num_v_pos_neg = len(pos_pairs) - num_tr_pos
+    train_pages = random.sample(parapair_data.keys(), TRAIN_PAGE_COUNT)
+    validation_pages = [p for p in parapair_data.keys() if p not in train_pages]
+    if num_neg_diff_page_count > 0:
+        print("Adding {} negative samples from different pages".format(num_neg_diff_page_count))
+        neg_diff_page_pairs = \
+            parapir_generator.get_random_neg_parapairs_different_page(page_paras, train_pages, num_neg_diff_page_count)
+    train_labels = []
+    train_pairs = []
+    for p in train_pages:
+        train_pairs = train_pairs + parapair_data[p]['parapairs']
+        train_labels = train_labels + parapair_data[p]['labels']
+    train_pos_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 1]
+    train_neg_pairs = [p for p in train_pairs if train_labels[train_pairs.index(p)] == 0]
+    pair_shuffle_random(train_pos_pairs)
+    pair_shuffle_random(train_neg_pairs)
+    pair_shuffle_random(neg_diff_page_pairs)
 
-    train_pos_pairs = random.sample(pos_pairs, num_tr_pos)
-    train_neg_pairs = random.sample(neg_pairs, num_tr_neg)
-    validation_pos_pairs = [p for p in pos_pairs if p not in train_pos_pairs]
-    validation_neg_pairs = random.sample([p for p in neg_pairs if p not in train_neg_pairs], num_v_pos_neg)
+    v_labels = []
+    v_pairs = []
+    for p in validation_pages:
+        v_pairs = v_pairs + parapair_data[p]['parapairs']
+        v_labels = v_labels + parapair_data[p]['labels']
+    v_pos_pairs = [p for p in v_pairs if v_labels[v_pairs.index(p)] == 1]
+    v_neg_pairs = [p for p in v_pairs if v_labels[v_pairs.index(p)] == 0]
+    pair_shuffle_random(v_pos_pairs)
+    pair_shuffle_random(v_neg_pairs)
+    assert len(v_pos_pairs) <= len(v_neg_pairs)
+    num_tr_pos = len(train_pos_pairs)
+    num_tr_neg = num_tr_pos - len(neg_diff_page_pairs)
+    num_v_pos_neg = len(v_pos_pairs)
+
+    # train_pos_pairs = random.sample(train_pos_pairs, num_tr_pos)
+    train_neg_pairs = random.sample(train_neg_pairs, num_tr_neg)
+    # v_pos_pairs = [p for p in train_pos_pairs if p not in train_pos_pairs]
+    v_neg_pairs = random.sample(v_neg_pairs, num_v_pos_neg)
     train_select_pairs = train_pos_pairs + train_neg_pairs + neg_diff_page_pairs
-    validation_select_pairs = validation_pos_pairs + validation_neg_pairs
+    validation_select_pairs = v_pos_pairs + v_neg_pairs
     random.shuffle(train_select_pairs)
     random.shuffle(validation_select_pairs)
 
     train_sequences = []
-    print("No. of available parapairs from parapair data: {}".format(len(parapair_data['parapairs'])))
+    # print("No. of available parapairs from parapair data: {}".format(len([p for p parapair_data['parapairs'])))
     print("No. of negative parapairs from different pages: {}".format(len(neg_diff_page_pairs)))
     print("Train set\n=========")
     print("No of +ve samples: {}".format(num_tr_pos) +
@@ -94,7 +131,7 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
     print("No of selected parapairs: {}".format(len(train_select_pairs)))
     for i in range(len(train_select_pairs)):
         pp = train_select_pairs[i]
-        if pp in pos_pairs:
+        if pp in train_pos_pairs:
             label = 1
         else:
             label = 0
@@ -112,7 +149,7 @@ def create_train_data(parapair_data, elmo_lookup, neg_diff_page_pairs):
     print("No of selected parapairs: {}".format(len(validation_select_pairs)))
     for i in range(len(validation_select_pairs)):
         pp = validation_select_pairs[i]
-        if pp in pos_pairs:
+        if pp in v_pos_pairs:
             label = 1
         else:
             label = 0
@@ -158,14 +195,16 @@ def main():
     parser.add_argument("-tp", "--test-pair", required=True, help="Path to test parapair json")
     parser.add_argument("-tre", "--train-elmo", required=True, help="Path to train ELMo lookup np file")
     parser.add_argument("-te", "--test-elmo", required=True, help="Path to test ELMo lookup np file")
-    parser.add_argument("-n", "--neg-diff", required=True, help="Path to negative parapair samples from different pages")
+    parser.add_argument("-pp", "--page-paras", required=True, help="Path to page paras file")
+    parser.add_argument("-n", "--neg-diff", type=int, required=True, help="No of negative parapair samples from different pages")
     parser.add_argument("-o", "--out", required=True, help="Path to output file")
     args = vars(parser.parse_args())
     train_parapair_file = args["train_pair"]
     train_elmo_lookup_file = args["train_elmo"]
     test_parapair_file = args["test_pair"]
     test_elmo_lookup_file = args["test_elmo"]
-    neg_pairs_diff_file = args["neg_diff"]
+    page_paras_file = args["page_paras"]
+    neg_pairs = args["neg_diff"]
     output_file = args["out"]
     train_elmo_lookup = np.load(train_elmo_lookup_file, allow_pickle=True)
     with open(train_parapair_file, 'r') as ppd:
@@ -173,11 +212,11 @@ def main():
     test_elmo_lookup = np.load(test_elmo_lookup_file, allow_pickle=True)
     with open(test_parapair_file, 'r') as ppdt:
         test_parapair_data = json.load(ppdt)
-    with open(neg_pairs_diff_file, 'r') as n:
-        neg_pairs = json.load(n)
+    with open(page_paras_file, 'r') as n:
+        page_paras = json.load(n)
 
     train_sequences, train_select_pairs, validation_sequences, validation_select_pairs = \
-        create_train_data(train_parapair_data, train_elmo_lookup, neg_pairs)
+        create_train_data(train_parapair_data, train_elmo_lookup, page_paras, neg_pairs)
     test_sequences, test_select_pairs = create_test_data(test_parapair_data, test_elmo_lookup)
     seq_data = dict()
     seq_data['train_data'] = train_sequences

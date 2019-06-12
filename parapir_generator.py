@@ -18,13 +18,14 @@ def get_random_neg_parapairs_different_page(page_paras, pagelist, count):
 def generate_parapairs(page_paras, page_para_labels_file, pages=[]):
     if len(pages) == 0:
         pages = list(page_paras.keys())
-    parapairs = []
-    labels = []
+    page_parapairs = dict()
     with open(page_para_labels_file, 'r') as pl:
         page_para_labels = json.load(pl)
     for page in pages:
         print(page)
         paras_in_page = page_paras[page]
+        parapairs = []
+        labels = []
         for i in range(len(paras_in_page)-1):
             for j in range(i+1, len(paras_in_page)):
                 pi = paras_in_page[i]
@@ -34,13 +35,14 @@ def generate_parapairs(page_paras, page_para_labels_file, pages=[]):
                     labels.append(1)
                 else:
                     labels.append(0)
-    assert len(parapairs) == len(labels)
-    return parapairs, labels
+        page_parapairs[page] = {'parapairs':parapairs, 'labels':labels}
+        assert len(parapairs) == len(labels)
+    return page_parapairs
 
 def main():
-    page_paras_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1test-cleaned.json.data/by1-test-cleaned.page.paras.json"
-    page_para_labels_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1test-cleaned.json.data/by1-test-cleaned.page.para.labels.json"
-    output_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/by1-test-cleaned-foodpages.parapairs.json"
+    page_paras_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1train-cleaned.json.data/by1-train-cleaned.page.paras.json"
+    page_para_labels_file = "/home/sumanta/Documents/Mule-data/input_data_v2/by1train-cleaned.json.data/by1-train-cleaned.page.para.labels.json"
+    output_file = "/home/sumanta/Documents/Mule-data/input_data_v2/pairs/by1-train-cleaned-tiny-foodpages.parapairs.json"
 
     train_food_pages = ["enwiki:Carbohydrate",
 "enwiki:Chocolate",
@@ -76,13 +78,14 @@ def main():
 "enwiki:Hot%20chocolate",
 "enwiki:Fudge",
 "enwiki:Cocoa%20butter"]
+    tiny_train_food_pages = ["enwiki:Sugar", "enwiki:Smoothie", "enwiki:Blueberry", "enwiki:Espresso"]
+    tiny_test_food_pages = ["enwiki:Avocado", "enwiki:Bagel"]
 
     with open(page_paras_file, 'r') as pp:
         page_paras = json.load(pp)
-    parapairs, labels = generate_parapairs(page_paras, page_para_labels_file, test_food_pages)
-    output_dict = {'parapairs':parapairs, 'labels':labels}
+    page_parapairs = generate_parapairs(page_paras, page_para_labels_file, tiny_train_food_pages)
     with open(output_file, 'w') as out:
-        json.dump(output_dict, out)
+        json.dump(page_parapairs, out)
 
 if __name__ == '__main__':
     main()

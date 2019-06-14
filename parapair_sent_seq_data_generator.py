@@ -65,7 +65,11 @@ def create_test_data(parapair_data, elmo_lookup):
         p2vec = test_sequences[p][25600:51200]
         p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
         p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
-        assert np.allclose(p1vec[:p1vec_elmo.size], p1vec_elmo) and np.allclose(p2vec[:p2vec_elmo.size], p2vec_elmo)
+        min_p1_len = min(len(p1vec), len(p1vec_elmo))
+        min_p2_len = min(len(p2vec), len(p2vec_elmo))
+        assert np.allclose(p1vec[:min_p1_len], p1vec_elmo[:min_p1_len]) and np.allclose(p2vec[:min_p2_len], p2vec_elmo[:min_p2_len])
+
+        # assert np.allclose(p1vec[:p1vec_elmo.size], p1vec_elmo) and np.allclose(p2vec[:p2vec_elmo.size], p2vec_elmo)
 
     return test_sequences, test_select_pairs
 

@@ -226,7 +226,8 @@ def main():
     seq_data['test_data'] = test_sequences
     seq_data['test_parapairs'] = test_select_pairs
 
-    np.save(output_file, seq_data)
+    # np.save(output_file, seq_data)
+    np.save(open(output_file, 'wb'), seq_data, allow_pickle=False)
 
 if __name__ == '__main__':
     main()

@@ -195,7 +195,7 @@ def main():
     parser.add_argument("-tp", "--test-pair", required=True, help="Path to test parapair json")
     parser.add_argument("-tre", "--train-elmo", required=True, help="Path to train ELMo lookup np file")
     parser.add_argument("-te", "--test-elmo", required=True, help="Path to test ELMo lookup np file")
-    parser.add_argument("-pp", "--page-paras", required=True, help="Path to page paras file")
+    parser.add_argument("-pp", "--page-paras", required=True, help="Path to train page paras file")
     parser.add_argument("-n", "--neg-diff", type=int, required=True, help="No of negative parapair samples from different pages")
     parser.add_argument("-o", "--out", required=True, help="Path to output file")
     args = vars(parser.parse_args())

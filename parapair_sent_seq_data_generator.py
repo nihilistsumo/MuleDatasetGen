@@ -79,8 +79,8 @@ def pair_shuffle_random(parapair_list):
         p2 = parapair_list[i].split("_")[1]
         parapair_list[i] = p2+"_"+p1
 
-def create_train_data(parapair_data, elmo_lookup, page_paras, num_neg_diff_page_count=0):
-    TRAIN_PAGE_COUNT = len(parapair_data.keys()) // 2
+def create_train_data(parapair_data, elmo_lookup, page_paras, train_val_split = 0.5, num_neg_diff_page_count=0):
+    TRAIN_PAGE_COUNT = math.floor(len(parapair_data.keys()) * train_val_split)
     VALIDATION_PAGE_COUNT = len(parapair_data.keys()) - TRAIN_PAGE_COUNT
 
     elmo_vec_len = len(elmo_lookup[()][list(elmo_lookup[()].keys())[0]][0])
@@ -201,7 +201,8 @@ def main():
     parser.add_argument("-te", "--test-elmo", required=True, help="Path to test ELMo lookup np file")
     parser.add_argument("-pp", "--page-paras", required=True, help="Path to train page paras file")
     parser.add_argument("-n", "--neg-diff", type=int, required=True, help="No of negative parapair samples from different pages")
-    parser.add_argument("-o", "--out", required=True, help="Path to output file")
+    parser.add_argument("-tv", "--train_val_split", type=float, required=True, help="Fraction of train/validation split")
+    parser.add_argument("-o", "--out", required=True, help="Path to output directory")
     args = vars(parser.parse_args())
     train_parapair_file = args["train_pair"]
     train_elmo_lookup_file = args["train_elmo"]
@@ -209,7 +210,8 @@ def main():
     test_elmo_lookup_file = args["test_elmo"]
     page_paras_file = args["page_paras"]
     neg_pairs = args["neg_diff"]
-    output_file = args["out"]
+    split_frac = args["train_val_split"]
+    output_dir = args["out"]
     train_elmo_lookup = np.load(train_elmo_lookup_file, allow_pickle=True)
     with open(train_parapair_file, 'r') as ppd:
         train_parapair_data = json.load(ppd)
@@ -220,18 +222,27 @@ def main():
         page_paras = json.load(n)
 
     train_sequences, train_select_pairs, validation_sequences, validation_select_pairs = \
-        create_train_data(train_parapair_data, train_elmo_lookup, page_paras, neg_pairs)
+        create_train_data(train_parapair_data, train_elmo_lookup, page_paras, split_frac, neg_pairs)
     test_sequences, test_select_pairs = create_test_data(test_parapair_data, test_elmo_lookup)
-    seq_data = dict()
-    seq_data['train_data'] = train_sequences
-    seq_data['train_parapairs'] = train_select_pairs
-    seq_data['val_data'] = validation_sequences
-    seq_data['val_parapairs'] = validation_select_pairs
-    seq_data['test_data'] = test_sequences
-    seq_data['test_parapairs'] = test_select_pairs
+    
+    # seq_data = dict()
+    # seq_data['train_data'] = train_sequences
+    # seq_data['train_parapairs'] = train_select_pairs
+    # seq_data['val_data'] = validation_sequences
+    # seq_data['val_parapairs'] = validation_select_pairs
+    # seq_data['test_data'] = test_sequences
+    # seq_data['test_parapairs'] = test_select_pairs
 
-    # np.save(output_file, seq_data)
-    np.save(open(output_file, 'wb'), seq_data, allow_pickle=False)
+    print("Going to save train data, size: {} GB".format(train_sequences.nbytes/(1024 * 1024 * 1024)))
+    np.save(output_dir + "/train_data", train_sequences)
+    print("Going to save vaidation data, size: {} GB".format(validation_sequences.nbytes / (1024 * 1024 * 1024)))
+    np.save(output_dir + "/val_data", validation_sequences)
+    print("Going to save test data, size: {} GB".format(test_sequences.nbytes / (1024 * 1024 * 1024)))
+    np.save(output_dir + "/test_data", test_sequences)
+    np.save(output_dir + "/train_parapair_list", train_select_pairs)
+    np.save(output_dir + "/val_parapair_list", validation_select_pairs)
+    np.save(output_dir + "/test_parapair_list", test_select_pairs)
+
 
 if __name__ == '__main__':
     main()

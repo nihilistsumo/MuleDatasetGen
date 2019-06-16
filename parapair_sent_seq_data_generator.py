@@ -224,7 +224,7 @@ def main():
     train_sequences, train_select_pairs, validation_sequences, validation_select_pairs = \
         create_train_data(train_parapair_data, train_elmo_lookup, page_paras, split_frac, neg_pairs)
     test_sequences, test_select_pairs = create_test_data(test_parapair_data, test_elmo_lookup)
-    
+
     # seq_data = dict()
     # seq_data['train_data'] = train_sequences
     # seq_data['train_parapairs'] = train_select_pairs

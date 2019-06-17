@@ -55,7 +55,7 @@ def get_elmo_embed_paras_in_page(page, page_paras, para_text_dict, nlp, embed, e
     assert len(para_sent_keys) == sentence_vecs.shape[0]
     para_embeddings = dict()
     for i in range(len(para_sent_keys)):
-        para_embeddings[para_sent_keys[i]] = embeddings[i]
+        para_embeddings[para_sent_keys[i]] = sentence_vecs[i]
     return para_embeddings
 
 def get_embeddings(pages, page_paras, para_text_dict, emb_style):
@@ -102,10 +102,9 @@ def main():
     with open(page_paras_json, 'r') as pp:
         page_paras = json.load(pp)
 
-    embed_data = get_embeddings(pages, page_paras, para_text_dict, emb_style)
-
-    with open(elmo_out_file, "w") as out:
-        json.dump(embed_data, out)
+    embed_data = np.array(get_embeddings(pages, page_paras, para_text_dict, emb_style))
+    np.save(elmo_out_file, embed_data)
+    
     print("Done")
 
 if __name__ == '__main__':

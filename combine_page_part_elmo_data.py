@@ -17,6 +17,8 @@ comb_dict = dict()
 for f in os.listdir(indir):
     print(f)
     curr_dict = np.load(indir+"/"+f, allow_pickle=True)[()]
-    comb_dict.update(curr_dict)
+    for page in curr_dict.keys():
+        comb_dict.update(curr_dict[page])
+    # comb_dict.update(curr_dict)
 
 np.save(outfile, comb_dict)

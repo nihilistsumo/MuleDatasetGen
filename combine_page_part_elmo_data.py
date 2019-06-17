@@ -16,6 +16,6 @@ outfile = sys.argv[2]
 comb_dict = dict()
 for f in os.listdir(indir):
     print(f)
-    curr_dict = np.load(indir+"/"+f)[()]
+    curr_dict = np.load(indir+"/"+f, allow_pickle=True)[()]
     comb_dict.update(curr_dict)
 np.save(outfile, comb_dict)

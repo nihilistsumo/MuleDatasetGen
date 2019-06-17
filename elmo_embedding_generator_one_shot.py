@@ -48,7 +48,9 @@ def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
         embeddings = embed_dict["default"]
 
     print("Starting tensorflow session...")
-    with tf.Session() as sess:
+
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+    with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.tables_initializer())
         embed_vecs = sess.run(embeddings)

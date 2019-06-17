@@ -61,8 +61,8 @@ def create_test_data(parapair_data, elmo_lookup):
     for p in random.sample(range(len(test_select_pairs)), 10):
         p1 = test_select_pairs[p].split("_")[0]
         p2 = test_select_pairs[p].split("_")[1]
-        p1vec = test_sequences[p][:25600]
-        p2vec = test_sequences[p][25600:51200]
+        p1vec = test_sequences[p][:MAX_SENT_COUNT * elmo_vec_len]
+        p2vec = test_sequences[p][MAX_SENT_COUNT * elmo_vec_len:2 * MAX_SENT_COUNT * elmo_vec_len]
         p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
         p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
         min_p1_len = min(len(p1vec), len(p1vec_elmo))
@@ -167,8 +167,8 @@ def create_train_data(parapair_data, elmo_lookup, page_paras, train_val_split = 
     for p in random.sample(range(len(train_select_pairs)), 10):
         p1 = train_select_pairs[p].split("_")[0]
         p2 = train_select_pairs[p].split("_")[1]
-        p1vec = train_sequences[p][:25600]
-        p2vec = train_sequences[p][25600:51200]
+        p1vec = train_sequences[p][:MAX_SENT_COUNT * elmo_vec_len]
+        p2vec = train_sequences[p][MAX_SENT_COUNT * elmo_vec_len:2 * MAX_SENT_COUNT * elmo_vec_len]
         p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
         p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
         min_p1_len = min(len(p1vec), len(p1vec_elmo))
@@ -178,8 +178,8 @@ def create_train_data(parapair_data, elmo_lookup, page_paras, train_val_split = 
     for p in random.sample(range(len(validation_select_pairs)), 10):
         p1 = validation_select_pairs[p].split("_")[0]
         p2 = validation_select_pairs[p].split("_")[1]
-        p1vec = validation_sequences[p][:25600]
-        p2vec = validation_sequences[p][25600:51200]
+        p1vec = validation_sequences[p][:MAX_SENT_COUNT * elmo_vec_len]
+        p2vec = validation_sequences[p][MAX_SENT_COUNT * elmo_vec_len:2 * MAX_SENT_COUNT * elmo_vec_len]
         p1vec_elmo = np.array(elmo_lookup[()][p1]).flatten()
         p2vec_elmo = np.array(elmo_lookup[()][p2]).flatten()
         min_p1_len = min(len(p1vec), len(p1vec_elmo))

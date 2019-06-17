@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import math, json, os, sys
+import math, json, os, sys, argparse
 import numpy as np
 from scipy.spatial import distance
 import pandas as pd
@@ -76,18 +76,21 @@ def main():
     # by1train_nodup_json = "/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup.json.data/by1-train-nodup.para.texts.json"
     # page_paras_json = "/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup.json.data/by1-train-nodup.page.paras.json"
     # page_para_labels_json = "/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup.json.data/by1-train-nodup.page.para.labels.json"
-    if len(sys.argv) < 2:
-        print("Usage: python3 elmo_embedding_generator.py \n1. pages part filepath \n2. paratext json filepath"
-              "\n3. page paras json filepath \n4. page para labels filepath \n5. elmo embeddings output filepath"
-              "\n6. [tensorflow cache dir path, just give an empty dir path]")
-        sys.exit(0)
-    pages_part_file = sys.argv[1]
-    para_text_json = sys.argv[2]
-    page_paras_json = sys.argv[3]
-    page_para_labels_json = sys.argv[4]
-    elmo_out_file = sys.argv[5]
-    if len(sys.argv) > 6:
-        tf_cache_dir_path = sys.argv[6]
+    parser = argparse.ArgumentParser(description='Create ELMo paragraph embedding from a list of paragraphs.')
+    parser.add_argument("-pp", "--page_parts", required=True, help="Parts of pages")
+    parser.add_argument("-pt", "--para_text", required=True, help="Para text file")
+    parser.add_argument("-pgp", "--page_paras", required=True, help="Page paras file")
+    parser.add_argument("-o", "--out", required=True, help="Output file")
+    parser.add_argument("-es", "--embed_style", required=True, help="Style of embedding (def/concat)")
+    parser.add_argument("-tfc", "--tf_cache_dir", help="Directory to tf cache")
+    args = vars(parser.parse_args())
+    pages_part_file = args["page_parts"]
+    para_text_json = args["para_text"]
+    page_paras_json = args["page_paras"]
+    elmo_out_file = args["out"]
+    emb_style = args["embed_style"]
+    if args["tf_cache_dir"] != None:
+        tf_cache_dir_path = args["tf_cache_dir"]
         os.environ['TFHUB_CACHE_DIR'] = tf_cache_dir_path
 
     pages = []
@@ -98,11 +101,8 @@ def main():
         para_text_dict = json.load(by)
     with open(page_paras_json, 'r') as pp:
         page_paras = json.load(pp)
-    with open(page_para_labels_json, 'r') as pl:
-        labels = json.load(pl)
 
     embeddings_data = np.array(get_embeddings(pages, page_paras, para_text_dict, emb_style))
-    # np.save("/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup-elmo-data/by1train_elmo_data", embeddings_data)
     np.save(elmo_out_file, embeddings_data)
     print("Done")
 

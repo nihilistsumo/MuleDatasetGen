@@ -12,11 +12,11 @@ def get_sequence_vec_parapair(parapair, elmo_vec_lookup, sent_seq_len):
     p1_sent_seqs = np.array(elmo_vec_lookup[()][p1]).flatten()
     p2_sent_seqs = np.array(elmo_vec_lookup[()][p2]).flatten()
     if len(p1_sent_seqs) <= sent_seq_len:
-        p1_sent_seqs = np.concatenate((p1_sent_seqs, np.zeros(sent_seq_len - len(p1_sent_seqs))))
+        p1_sent_seqs = np.concatenate((np.zeros(sent_seq_len - len(p1_sent_seqs)), p1_sent_seqs))
     else:
         p1_sent_seqs = p1_sent_seqs[:sent_seq_len]
     if len(p2_sent_seqs) <= sent_seq_len:
-        p2_sent_seqs = np.concatenate((p2_sent_seqs, np.zeros(sent_seq_len - len(p2_sent_seqs))))
+        p2_sent_seqs = np.concatenate((np.zeros(sent_seq_len - len(p2_sent_seqs)), p2_sent_seqs))
     else:
         p2_sent_seqs = p2_sent_seqs[:sent_seq_len]
     return np.concatenate((p1_sent_seqs, p2_sent_seqs))

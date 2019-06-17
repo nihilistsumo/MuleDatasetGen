@@ -77,7 +77,7 @@ def main():
     # page_paras_json = "/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup.json.data/by1-train-nodup.page.paras.json"
     # page_para_labels_json = "/home/sumanta/Documents/Dugtrio-data/AttnetionWindowData/by1train-nodup.json.data/by1-train-nodup.page.para.labels.json"
     parser = argparse.ArgumentParser(description='Create ELMo paragraph embedding from a list of paragraphs.')
-    parser.add_argument("-pp", "--page_parts", required=True, help="Parts of pages")
+    parser.add_argument("-pp", "--page_parts", required=True, help="Parts of pages/ File containing list of pages")
     parser.add_argument("-pt", "--para_text", required=True, help="Para text file")
     parser.add_argument("-pgp", "--page_paras", required=True, help="Page paras file")
     parser.add_argument("-o", "--out", required=True, help="Output file")
@@ -102,8 +102,10 @@ def main():
     with open(page_paras_json, 'r') as pp:
         page_paras = json.load(pp)
 
-    embeddings_data = np.array(get_embeddings(pages, page_paras, para_text_dict, emb_style))
-    np.save(elmo_out_file, embeddings_data)
+    embed_data = get_embeddings(pages, page_paras, para_text_dict, emb_style)
+
+    with open(elmo_out_file, "w") as out:
+        json.dump(embed_data, out)
     print("Done")
 
 if __name__ == '__main__':

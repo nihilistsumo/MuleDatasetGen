@@ -42,6 +42,7 @@ def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
             para_embedding = embed_dict["default"]
         embed_vecs[para] = para_embedding
 
+    paras = np.array(paras)
     with Pool(processes=20) as p:
         p.map(construct_para_embedding, paras)
 

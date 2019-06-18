@@ -20,53 +20,46 @@ def preprocess_text(paratext):
 
 def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
     print(str(len(paras))+" total paras")
-    paraid_embed_index = dict()
-    # sentence for padding
-    pad_sentence = " "
-    para_sentences = [pad_sentence]
-    para_sent_index = 1
+    embed_vecs = dict()
     for para in paras:
         paratext = str(para_text_dict[para])
         text = preprocess_text(paratext)
         doc = nlp(text)
+        sentences = []
         for i in doc.sents:
             if len(i) > 1:
-                para_sentences.append(i.string.strip())
-                if para in paraid_embed_index.keys():
-                    paraid_embed_index[para].append(para_sent_index)
-                else:
-                    paraid_embed_index[para] = [para_sent_index]
-                para_sent_index += 1
-    print(str(len(para_sentences)-1) + " total sentences")
-    embed_dict = embed(para_sentences, signature="default", as_dict=True)
-    if embed_dict == 'concat':
-        wemb = embed_dict["word_emb"]
-        lstm1 = embed_dict["lstm_outputs1"]
-        lstm2 = embed_dict["lstm_outputs2"]
-        embeddings = tf.concat([wemb, lstm1, lstm2], axis=2)
-    else:
-        embeddings = embed_dict["default"]
+                sentences.append(i.string.strip())
+        print(para+": {}".format(len(sentences))+" sentences")
+        embed_dict = embed(sentences, signature="default", as_dict=True)
+        if embed_style == 'concat':
+            wemb = embed_dict["word_emb"]
+            lstm1 = embed_dict["lstm_outputs1"]
+            lstm2 = embed_dict["lstm_outputs2"]
+            para_embedding = tf.concat([wemb, lstm1, lstm2], axis=2)
+        else:
+            para_embedding = embed_dict["default"]
+        embed_vecs[para] = para_embedding
 
     print("Starting tensorflow session...")
-
-    # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.tables_initializer())
-        embed_vecs = sess.run(embeddings)
-    return embed_vecs, paraid_embed_index
+        embedding_dict = sess.run(embed_vecs)
+    # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+
+    return embedding_dict
 
 def main():
     parser = argparse.ArgumentParser(description='Create ELMo paragraph embedding from a list of paragraphs.')
     parser.add_argument("-pl", "--para_list", required=True, help="List of paragraphs")
     parser.add_argument("-pt", "--para_text", required=True, help="Para text file")
-    parser.add_argument("-o", "--outdir", required=True, help="Output directory")
+    parser.add_argument("-o", "--out", required=True, help="Output file")
     parser.add_argument("-es", "--embed_style", required=True, help="Style of embedding (def/concat)")
     parser.add_argument("-tfc", "--tf_cache_dir", help="Directory to tf cache")
     args = vars(parser.parse_args())
     para_list = args["para_list"]
     para_text_file = args["para_text"]
-    outdir = args["outdir"]
+    elmo_out_file = args["outdir"]
     emb_style = args["embed_style"]
     if args["tf_cache_dir"] != None:
         tf_cache_dir_path = args["tf_cache_dir"]
@@ -81,10 +74,9 @@ def main():
     url = "https://tfhub.dev/google/elmo/2"
     embed = hub.Module(url)
 
-    embed_vecs, paraid_embed_index = get_elmo_embed_paras(paras, para_text_dict, nlp, embed, emb_style)
+    embed_vecs = np.array(get_elmo_embed_paras(paras, para_text_dict, nlp, embed, emb_style))
     print("Done")
-    np.save(outdir+"/embeddings_vecs", embed_vecs)
-    np.save(outdir+"/paraid_embed_index", paraid_embed_index)
+    np.save(elmo_out_file, embed_vecs)
 
 if __name__ == '__main__':
     main()

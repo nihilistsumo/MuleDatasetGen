@@ -59,7 +59,7 @@ def main():
     args = vars(parser.parse_args())
     para_list = args["para_list"]
     para_text_file = args["para_text"]
-    elmo_out_file = args["outdir"]
+    elmo_out_file = args["out"]
     emb_style = args["embed_style"]
     if args["tf_cache_dir"] != None:
         tf_cache_dir_path = args["tf_cache_dir"]

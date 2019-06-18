@@ -50,11 +50,13 @@ parser.add_argument("-pt", "--para_text", required=True, help="Para text file")
 parser.add_argument("-o", "--out", required=True, help="Output file")
 parser.add_argument("-es", "--embed_style", required=True, help="Style of embedding (def/concat)")
 parser.add_argument("-tfc", "--tf_cache_dir", help="Directory to tf cache")
+parser.add_argument("-pn", "--no_processes", type=int, required=True, help="No of parallel processes")
 args = vars(parser.parse_args())
 para_list = args["para_list"]
 para_text_file = args["para_text"]
 elmo_out_file = args["out"]
 emb_style = args["embed_style"]
+pno = args["no_processes"]
 if args["tf_cache_dir"] != None:
     tf_cache_dir_path = args["tf_cache_dir"]
     os.environ['TFHUB_CACHE_DIR'] = tf_cache_dir_path
@@ -64,7 +66,7 @@ with open(para_text_file, 'r') as pt:
     para_text_dict = json.load(pt)
 
 print("Data loaded")
-# logging.getLogger('tensorflow').disabled = True
+logging.getLogger('tensorflow').disabled = True
 nlp = spacy.load('en_core_web_md')
 url = "https://tfhub.dev/google/elmo/2"
 embed = hub.Module(url)
@@ -73,7 +75,7 @@ print("Tensorflow-hub loaded")
 print(str(len(paras))+" total paras")
 embed_vecs = dict()
 
-with Pool(4) as pool:
+with Pool(pno) as pool:
     pool.map(construct_para_embedding, paras)
 
 print("Starting tensorflow session...")

@@ -84,4 +84,4 @@ with tf.Session() as sess:
     sess.run(tf.tables_initializer())
     embedding_dict = sess.run(embed_vecs)
 print("Done")
-np.save(elmo_out_file, embed_vecs)
+np.save(elmo_out_file, embedding_dict)

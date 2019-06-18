@@ -19,25 +19,6 @@ def preprocess_text(paratext):
     text = ' '.join(text.split())
     return text
 
-def construct_para_embedding(para, para_text_dict, nlp, embed, embed_stl, embed_vecs):
-    paratext = str(para_text_dict[para])
-    text = preprocess_text(paratext)
-    doc = nlp(text)
-    sentences = []
-    for i in doc.sents:
-        if len(i) > 1:
-            sentences.append(i.string.strip())
-    print(para + ": {}".format(len(sentences)) + " sentences")
-    embed_dict = embed(sentences, signature="default", as_dict=True)
-    if embed_stl == 'concat':
-        wemb = embed_dict["word_emb"]
-        lstm1 = embed_dict["lstm_outputs1"]
-        lstm2 = embed_dict["lstm_outputs2"]
-        para_embedding = tf.concat([wemb, lstm1, lstm2], axis=2)
-    else:
-        para_embedding = embed_dict["default"]
-    embed_vecs[para] = para_embedding
-
 def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
     print(str(len(paras))+" total paras")
     embed_vecs = dict()
@@ -50,7 +31,7 @@ def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
         for i in doc.sents:
             if len(i) > 1:
                 sentences.append(i.string.strip())
-        print(para + ": {}".format(len(sentences)) + " sentences")
+        # print(para + ": {}".format(len(sentences)) + " sentences")
         embed_dict = embed(sentences, signature="default", as_dict=True)
         if embed_style == 'concat':
             wemb = embed_dict["word_emb"]
@@ -62,13 +43,13 @@ def get_elmo_embed_paras(paras, para_text_dict, nlp, embed, embed_style="def"):
         embed_vecs[para] = para_embedding
 
     with Pool(processes=20) as p:
-        embed_result = p.map(construct_para_embedding, paras)
+        p.map(construct_para_embedding, paras)
 
     print("Starting tensorflow session...")
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.tables_initializer())
-        embedding_dict = sess.run(embed_result)
+        embedding_dict = sess.run(embed_vecs)
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
 
     return embedding_dict

@@ -35,11 +35,7 @@ def construct_para_embedding(para):
         para_embedding = tf.concat([wemb, lstm1, lstm2], axis=2)
     else:
         para_embedding = embed_dict["default"]
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.tables_initializer())
-        embeddings = sess.run(para_embedding)
-    embed_vecs[para] = embeddings
+    embed_vecs[para] = para_embedding
 
 
 parser = argparse.ArgumentParser(description='Create ELMo paragraph embedding from a list of paragraphs.')
@@ -76,11 +72,11 @@ embed_vecs = dict()
 with ThreadPool(pno) as pool:
     pool.map(construct_para_embedding, paras)
 
-# print("Starting tensorflow session...")
-# with tf.Session() as sess:
-#     sess.run(tf.global_variables_initializer())
-#     sess.run(tf.tables_initializer())
-#     embedding_dict = sess.run(embed_vecs)
+print("Starting tensorflow session...")
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    sess.run(tf.tables_initializer())
+    embedding_dict = sess.run(embed_vecs)
 
 print("Done")
-np.save(elmo_out_file, embed_vecs)
+np.save(elmo_out_file, embedding_dict)

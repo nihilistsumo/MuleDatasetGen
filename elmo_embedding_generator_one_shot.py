@@ -6,7 +6,7 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import spacy
 import logging
-from pathos.multiprocessing import Pool
+from pathos.multiprocessing import ThreadPool
 
 #######################################
 #
@@ -73,7 +73,7 @@ print("Tensorflow-hub loaded")
 print(str(len(paras))+" total paras")
 embed_vecs = dict()
 
-with Pool(pno) as pool:
+with ThreadPool(pno) as pool:
     pool.map(construct_para_embedding, paras)
 
 # print("Starting tensorflow session...")

@@ -32,10 +32,9 @@ def construct_para_embedding(para):
         wemb = embed_dict["word_emb"]
         lstm1 = embed_dict["lstm_outputs1"]
         lstm2 = embed_dict["lstm_outputs2"]
-        para_embedding = tf.concat([wemb, lstm1, lstm2], axis=2)
+        embed_vecs[para] = tf.concat([wemb, lstm1, lstm2], axis=2)
     else:
-        para_embedding = embed_dict["default"]
-    embed_vecs[para] = para_embedding
+        embed_vecs[para] = embed_dict["default"]
 
 
 parser = argparse.ArgumentParser(description='Create ELMo paragraph embedding from a list of paragraphs.')
@@ -69,8 +68,19 @@ print("Tensorflow-hub loaded")
 print(str(len(paras))+" total paras")
 embed_vecs = dict()
 
+tiny_paras = ['5c2ffec45923b019cfaa5f9e1cc46731d1947137',
+ '6607c26ec6d1d4eb1d758ffdb8e8f5e97f57ea9f',
+ '663f25179bc56cd25f76deab8e2aafbeefe8e66f',
+ '69958deca2696a5c19d7023f71b2f2714271f220',
+ '6a09d40359e93f740e9fa9aafeda1e7b430cb431',
+ '7675c12a8c64b1b39bb017d69c7cd255c065cc21',
+ '84d2cec68885ab1f2690d5a1219aab9ccfa634fe',
+ '89f64c107e852d3517371b50635f7bd9f3370a20',
+ '8cbe82c4cea425d6212a47e3c9fb4444ea6232f0',
+ '8d2568217c1440dff274787a0edf55eb8eb05816']
+
 with ThreadPool(pno) as pool:
-    pool.map(construct_para_embedding, paras)
+    pool.map(construct_para_embedding, tiny_paras)
 
 print("Starting tensorflow session...")
 with tf.Session() as sess:

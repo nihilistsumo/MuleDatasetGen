@@ -38,7 +38,7 @@ pno = args["no_processes"]
 glove = pd.read_table(glove_file, sep=" ", index_col=0, header=None, quoting=csv.QUOTE_NONE)
 with open(para_list, 'r') as pl:
     paras = json.load(pl)
-tokenized_para = np.load(tokenized_para_file)
+tokenized_para = np.load(tokenized_para_file, allow_pickle=True)
 
 print("Data loaded")
 print(str(len(paras))+" total paras")

@@ -1,11 +1,8 @@
 import argparse
 import json
-import random
 import spacy
 
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from allennlp.commands.elmo import ElmoEmbedder
 from pathos.threading import ThreadPool
 

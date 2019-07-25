@@ -3,9 +3,9 @@ import argparse, json, random, math
 import numpy as np
 
 def get_pairdata(train_parapair_dict, test_parapair_dict, train_val_ratio, train_pair_file, val_pair_file, test_pair_file):
-    train_pages = train_parapair_dict.keys()
-    val_pages = random.sample(train_pages, math.floor(len(train_pages) * train_val_ratio))
-    train_pages = train_pages - val_pages
+    all_pages = train_parapair_dict.keys()
+    train_pages = random.sample(all_pages, math.floor(len(all_pages) * train_val_ratio))
+    val_pages = all_pages - train_pages
     test_pages = test_parapair_dict.keys()
 
     with open(train_pair_file, 'w') as trp:
